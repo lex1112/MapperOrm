@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E17A1F14-228D-4231-B929-F09D95F8632B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MapperOrm</RootNamespace>
+    <AssemblyName>MapperOrm</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity.Design" />
+    <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IdentityModel" />
+    <Reference Include="System.IdentityModel.Selectors" />
+    <Reference Include="System.ServiceModel.DomainServices.EntityFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.Entity.Design" />
+    <Reference Include="System.Web.Mvc, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Attributes\RelatedEntityAttribute.cs" />
+    <Compile Include="Attributes\FieldNameAttribute.cs" />
+    <Compile Include="Attributes\TableNameAttribute.cs" />
+    <Compile Include="DBContext\DataSourceProviderFactory.cs" />
+    <Compile Include="DBContext\DbConnectionState.cs" />
+    <Compile Include="DBContext\IEntitySet.cs" />
+    <Compile Include="Exceptions\ExecuteQueryException.cs" />
+    <Compile Include="DBContext\EntitySet.cs" />
+    <Compile Include="DBContext\IDataSourceProvider.cs" />
+    <Compile Include="Helpers\CacheReflectionWrapper.cs" />
+    <Compile Include="Helpers\Helper.cs" />
+    <Compile Include="Helpers\CommandExecutors.cs" />
+    <Compile Include="CommandBuilders\DeleteCommandBuilder.cs" />
+    <Compile Include="Helpers\DefaultTypeMapper.cs" />
+    <Compile Include="Helpers\IReflectionWrapper.cs" />
+    <Compile Include="Helpers\NetTypesToDbTypesMapper.cs" />
+    <Compile Include="Helpers\ReflectionWrapper.cs" />
+    <Compile Include="DBContext\DbProvider.cs" />
+    <Compile Include="CommandBuilders\SelectCommandBulder.cs" />
+    <Compile Include="CommandBuilders\InsertCommandBuilder.cs" />
+    <Compile Include="CommandBuilders\UpdateCommandBuilder.cs" />
+    <Compile Include="CommandBuilders\CommonCommandBuilder.cs" />
+    <Compile Include="Models\EntityBase.cs" />
+    <Compile Include="Models\IEntity.cs" />
+    <Compile Include="Repository\AddObjInfoEventArgs.cs" />
+    <Compile Include="Repository\DefaultObjectDetector.cs" />
+    <Compile Include="Repository\DirtyObjsInfoEventArgs.cs" />
+    <Compile Include="Repository\EntityStruct.cs" />
+    <Compile Include="Repository\IObjectDetector.cs" />
+    <Compile Include="Repository\IRepository.cs" />
+    <Compile Include="Repository\IUnitOfWork.cs" />
+    <Compile Include="Repository\RemoveObjInfoEventArgs.cs" />
+    <Compile Include="Repository\RepoHelper.cs" />
+    <Compile Include="Repository\UnitOfWork.cs" />
+    <Compile Include="Repository\Repository.cs" />
+    <Compile Include="Repository\UnitOfWorkManager.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
