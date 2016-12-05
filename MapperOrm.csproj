@@ -42,6 +42,7 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity" />
     <Reference Include="System.Data.Entity.Design" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Drawing" />
@@ -63,9 +64,12 @@
     <Compile Include="Attributes\RelatedEntityAttribute.cs" />
     <Compile Include="Attributes\FieldNameAttribute.cs" />
     <Compile Include="Attributes\TableNameAttribute.cs" />
+    <Compile Include="CommandBuilders\UpdateBySelectCommandBulder.cs" />
+    <Compile Include="CommandBuilders\DeleteWhereCommandBulder.cs" />
     <Compile Include="DBContext\DataSourceProviderFactory.cs" />
     <Compile Include="DBContext\DbConnectionState.cs" />
     <Compile Include="DBContext\IEntitySet.cs" />
+    <Compile Include="DBContext\TrackerProvider.cs" />
     <Compile Include="Exceptions\ExecuteQueryException.cs" />
     <Compile Include="DBContext\EntitySet.cs" />
     <Compile Include="DBContext\IDataSourceProvider.cs" />
@@ -82,20 +86,24 @@
     <Compile Include="CommandBuilders\InsertCommandBuilder.cs" />
     <Compile Include="CommandBuilders\UpdateCommandBuilder.cs" />
     <Compile Include="CommandBuilders\CommonCommandBuilder.cs" />
+    <Compile Include="Helpers\ExpressionTypeToDbClause.cs" />
     <Compile Include="Models\EntityBase.cs" />
     <Compile Include="Models\IEntity.cs" />
     <Compile Include="Repository\AddObjInfoEventArgs.cs" />
-    <Compile Include="Repository\DefaultObjectDetector.cs" />
+    <Compile Include="Repository\DefaultObjectTracker.cs" />
+    <Compile Include="Repository\DeleteWhereObjsInfoEventArgs.cs" />
     <Compile Include="Repository\DirtyObjsInfoEventArgs.cs" />
     <Compile Include="Repository\EntityStruct.cs" />
-    <Compile Include="Repository\IObjectDetector.cs" />
+    <Compile Include="Repository\ExpressionParser.cs" />
+    <Compile Include="Repository\IObjectTracker.cs" />
     <Compile Include="Repository\IRepository.cs" />
     <Compile Include="Repository\IUnitOfWork.cs" />
     <Compile Include="Repository\RemoveObjInfoEventArgs.cs" />
     <Compile Include="Repository\RepoHelper.cs" />
     <Compile Include="Repository\UnitOfWork.cs" />
     <Compile Include="Repository\Repository.cs" />
-    <Compile Include="Repository\UnitOfWorkManager.cs" />
+    <Compile Include="Repository\Session.cs" />
+    <Compile Include="Repository\UpdateObjsInfoEventArgs.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

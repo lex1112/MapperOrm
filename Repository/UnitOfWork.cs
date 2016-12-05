@@ -9,11 +9,11 @@ namespace MapperOrm.Repository
 {
     public sealed class UnitOfWork : IUnitOfWork, IDetector
     {
-        private readonly Dictionary<string, IObjectDetector> _objectDetector;
+        private readonly Dictionary<string, IObjectTracker> _objectDetector;
 
         private event EventHandler Event;
 
-        Dictionary<string, IObjectDetector> IDetector.ObjectDetector
+        Dictionary<string, IObjectTracker> IDetector.ObjectDetector
         {
             get { return _objectDetector; }
         }
@@ -21,12 +21,12 @@ namespace MapperOrm.Repository
 
         public UnitOfWork()
         {
-            _objectDetector = new Dictionary<string, IObjectDetector>();
+            _objectDetector = new Dictionary<string, IObjectTracker>();
             foreach (ConnectionStringSettings conName in ConfigurationManager.ConnectionStrings)
             {
-                _objectDetector.Add(conName.Name, new DefaultObjectDetector());
+                _objectDetector.Add(conName.Name, new DefaultObjectTracker());
             }
-            Event += UnitOfWorkManager.OnDisponse;
+            Event += Session.OnDisponse;
         }
 
 
@@ -41,9 +41,13 @@ namespace MapperOrm.Repository
                     {
                         foreach (var objectDetector in _objectDetector)
                         {
-                            var provider = DataSourceProviderFactory.Create(objectDetector.Key);
-                            provider.Commit(objectDetector.Value.ChangeObjects, objectDetector.Value.DeletedObjects,
-                                            objectDetector.Value.NewObjects);
+                            var provider = new TrackerProvider(objectDetector.Key);
+                            provider.Commit(
+                                objectDetector.Value.ChangeObjects, 
+                                objectDetector.Value.DeletedObjects,
+                                            objectDetector.Value.NewObjects,
+                                            objectDetector.Value.UpdatedObjects,
+                                            objectDetector.Value.DeletedWhereExp);
                         }
                     }
                 

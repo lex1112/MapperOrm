@@ -1,31 +1,30 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using MapperOrm.Models;
+using MapperOrm.Repository;
 
 namespace MapperOrm.DBContext
 {
-    public class EntitySet<T> : IEntitySet where T : class, IEntity, new()
+    public class EntitySet<T> : IEntitySet where T : EntityBase, IEntity, new()
     {
         private readonly object _syncObj = new object();
         private readonly ICollection<T> _entities = null;
-        private readonly int _entityId;
-        private readonly string _fieldName;
-        private readonly string _connString = null;
+        private readonly T _param;
+        private readonly string _connString;
         private bool _isLoad;
 
-        public EntitySet(int id, string fieldName, string connString)
+        public EntitySet(T param, string connString)
         {
             _isLoad = false;
-            _entityId = id;
-            _fieldName = fieldName;
             _connString = connString;
+            _param = param;
         }
 
         private ICollection<T> Load()
         {
             _isLoad = true;
-            var keyValues = new Dictionary<string, object> { { _fieldName, _entityId } };
-            return DataSourceProviderFactory.CreateByDefaultDataProvider(_connString).ExecuteByField<T>(keyValues);
+            return DataSourceProviderFactory
+                .CreateByDefaultDataProvider(_connString).GetByFields<T>(new EntityStruct(_param.GetType(), _param));
 
         }
 

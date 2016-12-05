@@ -1,9 +1,5 @@
-﻿using System.Data.Entity;
-using System.Data.SqlClient;
-using System.Diagnostics.Eventing.Reader;
-using System.Linq;
+﻿using System.Linq;
 using System.Linq.Expressions;
-using MapperOrm.Helpers;
 using MapperOrm.DBContext;
 using MapperOrm.Models;
 
@@ -12,16 +8,11 @@ namespace MapperOrm.Repository
     using System;
     using System.Collections.Generic;
 
-    public abstract class Repository<T> : IRepository<T> where T : class, IEntity, new()
+    public abstract class Repository<T> : IRepository<T> where T : EntityBase, IEntity, new()
     {
         private readonly object _syncObj = new object();
 
         private IDataSourceProvider _dataSourceProvider;
-        private event EventHandler<AddObjInfoEventArgs> AddObjEvent;
-        private event EventHandler<RemoveObjInfoEventArgs> RemoveObjEvent;
-        private event EventHandler<DirtyObjsInfoEventArgs> DirtyObjEvent;
-        
-
         private IDataSourceProvider DataSourceProvider
         {
             get
@@ -30,7 +21,8 @@ namespace MapperOrm.Repository
                 {
                     if (_dataSourceProvider.State == State.Close)
                     {
-                        _dataSourceProvider = DataSourceProviderFactory.Create(_connectionName);
+                        _dataSourceProvider =  GetDataSourceProvider();
+                        
                     }
                     return _dataSourceProvider;
                 }
@@ -38,17 +30,8 @@ namespace MapperOrm.Repository
             }
 
         }
+
         private readonly string _connectionName;
-        private IObjectDetector ObjectDetector
-        {
-            get
-            {
-                lock (_syncObj)
-                {
-                    return GetObjectDetector();
-                }
-            }
-        }
 
         internal Repository(IDataSourceProvider dataSourceProvider)
         {
@@ -63,67 +46,48 @@ namespace MapperOrm.Repository
                 throw new ArgumentNullException("connectionName");
             }
             _connectionName = connectionName;
-            var dataSourceProvider = DataSourceProviderFactory.Create(connectionName);
+            var dataSourceProvider = GetDataSourceProvider();
             if (dataSourceProvider == null)
             {
                 throw new ArgumentNullException("dataSourceProvider");
             }
             _dataSourceProvider = dataSourceProvider;
-            RegisterEvents();
         }
 
-        private void RegisterEvents()
+        private IDataSourceProvider GetDataSourceProvider()
         {
-            AddObjEvent += ObjectDetector.InsertedNewObjects;
-            RemoveObjEvent += ObjectDetector.DeletedObjectsObjects;
-            DirtyObjEvent += ObjectDetector.RegistrationCleanObjects;
+            return Session.Current == null ? DataSourceProviderFactory.Create(_connectionName)
+                       : new TrackerProvider(_connectionName);
         }
 
-
-        public ICollection<T> GetByColumnName(Dictionary<string, object> keyValues)
+        public ICollection<T> Get(Expression<Func<T, bool>> exp)
         {
-            var result = DataSourceProvider.ExecuteByField<T>(keyValues);
-            var registratedObjs = result.Select(r => new EntityStruct(typeof(T), r as EntityBase)).ToList();
+            return DataSourceProvider.GetByFields<T>(exp.Body as BinaryExpression);
+        }
 
-            var handler = DirtyObjEvent;
-            if (handler == null)
-                throw new EventLogException();
-
-            handler(this, new DirtyObjsInfoEventArgs(registratedObjs));
-            return result;
+        public void Update(Expression<Func<T, bool>> exp, Func<T, T> func)
+        {
+            var obj = func.Invoke(null);
+            DataSourceProvider.Update<T>(exp.Body as BinaryExpression, new EntityStruct(typeof(T), obj));
 
         }
+
+        public void RemoveWhere(Expression<Func<T, bool>> exp)
+        {
+            _dataSourceProvider.RemoveWhere(exp.Body as BinaryExpression, typeof(T));
+           
+        }
+
         public void Add(T obj)
         {
-            var handler = AddObjEvent;
-            if (handler == null)
-                return;
-            handler(this, new AddObjInfoEventArgs(new EntityStruct(typeof(T), obj as EntityBase)));
+            _dataSourceProvider.Add(new EntityStruct(typeof(T), obj));
+            
         }
 
         public void Remove(T obj)
         {
-            var handler = RemoveObjEvent;
-            if (handler == null)
-                return;
-            handler(this, new RemoveObjInfoEventArgs(new EntityStruct(typeof(T), obj as EntityBase)));
+            _dataSourceProvider.Remove(new EntityStruct(typeof(T), obj));
         }
 
-        private IObjectDetector GetObjectDetector()
-        {
-            var uow = UnitOfWorkManager.Current;
-            if (uow == null)
-            {
-                throw new ApplicationException("Current context of unit of work is did't make. Create unit of work context and using UnitPfWorkManager.");
-            }
-
-            var detector = uow as IDetector;
-            if (detector == null)
-            {
-                throw new ApplicationException("Current context of unit of work is did't make. Create unit of work context and using UnitPfWorkManager.");
-            }
-
-            return detector.ObjectDetector[_connectionName];
-        }
     }
 }

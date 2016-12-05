@@ -4,8 +4,10 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using MapperOrm.CommandBuilders;
 using MapperOrm.DBContext;
 using MapperOrm.Models;
 using MapperOrm.Repository;
@@ -14,6 +16,7 @@ namespace MapperOrm.Helpers
 {
     internal static class Helper
     {
+
         public static ICollection<PropertyInfo> ExceptRelatedType(this ICollection<PropertyInfo> props)
         {
             return props.Where(prop => !prop.PropertyType.IsGenericType || prop.PropertyType.GetGenericTypeDefinition() != typeof(EntitySet<>)).ToList();
@@ -55,22 +58,7 @@ namespace MapperOrm.Helpers
         }
 
 
-        public static object ToDbTypes(this object obj)
-        {
 
-            if (obj is String)
-            {
-
-                return (DbType)obj;
-            }
-
-            if (obj is String)
-            {
-                string.Format("'{0}'", obj);
-            }
-
-            return obj;
-        }
 
         public static SqlDbType GetDBType(Type theType)
         {

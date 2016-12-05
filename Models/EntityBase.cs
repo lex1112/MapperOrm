@@ -2,7 +2,7 @@
 
 namespace MapperOrm.Models
 {
-    public abstract class EntityBase : IEntity, ICloneable
+    public abstract class EntityBase : IEntity
     {
         public abstract int Id { get; set; }
 

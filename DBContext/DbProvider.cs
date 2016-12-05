@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq.Expressions;
 using System.Text;
 using MapperOrm.CommandBuilders;
 using MapperOrm.Exceptions;
@@ -22,68 +23,101 @@ namespace MapperOrm.DBContext
 
         public State State { get; private set; }
 
-        public ICollection<T> ExecuteByField<T>(Dictionary<string, object> keyValue) where T : class, IEntity, new()
+        public ICollection<T> GetByFields<T>(EntityStruct obj) where T : EntityBase, IEntity, new()
         {
-            if (keyValue.Count == 0)
-            {
-                throw new ArgumentException(string.Format("Argument keyValue is empty."));
-            }
-            return ExecuteListReader<T>(keyValue);
+            return ExecuteListReader<T>(obj);
         }
 
-        public void Add(ICollection<EntityStruct> objs)
+
+        public ICollection<T> GetByFields<T>(BinaryExpression exp) where T : EntityBase, IEntity, new()
         {
-            if (objs.Count == 0)
+            Func<IDbCommand, BinaryExpression, string> cmdBuilder = SelectCommandBulder.Create<T>;
+            ICollection<T> result;
+            using (var conn = _connection)
             {
-                return;
+                using (var command = conn.CreateCommand())
+                {
+                    command.CommandText = cmdBuilder.Invoke(command, exp);
+                    command.CommandType = CommandType.Text;
+                    conn.Open();
+                    result = command.ExecuteListReader<T>();
+                }
             }
+            State = State.Close;
+            return result;
+        }
+
+       public void Update<T>(BinaryExpression exp, EntityStruct obj) where T : EntityBase, IEntity, new()
+        {
+            Func<IDbCommand, Dictionary<BinaryExpression, EntityStruct>, string> cmdBuilder = UpdateBySelectCommandBulder.Create;
+
+            using (var conn = _connection)
+            {
+                using (var command = conn.CreateCommand())
+                {
+                    command.CommandText = cmdBuilder.Invoke(command, new Dictionary<BinaryExpression, EntityStruct>
+                        {
+                            {exp, obj}
+                        });
+                    command.CommandType = CommandType.Text;
+                    conn.Open();
+                    if (command.ExecuteNonQuery() < 1)
+                        throw new ExecuteQueryException(command);
+                }
+            }
+            State = State.Close;
+        }
+
+
+
+        public void Add(EntityStruct obj)
+        {
+            if (obj.Value == null)
+            {
+                throw new ArgumentException();
+            }
+           
             Func<IDbCommand, ICollection<EntityStruct>, string> cmdBuilder = InsertCommandBuilder.Create;
             ExecuteNonQuery(
                 new Dictionary<Func<IDbCommand, ICollection<EntityStruct>, string>, ICollection<EntityStruct>>
                 {
                     {
-                        cmdBuilder, objs
+                        cmdBuilder, new List<EntityStruct>{obj}
                     }
                 });
         }
 
 
-
-        public void Update(ICollection<EntityStruct> objs)
+        public void Remove(EntityStruct obj)
         {
-            if (objs.Count == 0)
+            if (obj.Value == null)
             {
-                return;
-            }
-            Func<IDbCommand, ICollection<EntityStruct>, string> cmdBuilder = UpdateCommandBuilder.Create;
-            ExecuteNonQuery(
-               new Dictionary<Func<IDbCommand, ICollection<EntityStruct>, string>, ICollection<EntityStruct>>
-                {
-                    {
-                        cmdBuilder, objs
-                    }
-                });
-        }
-
-        public void Remove(ICollection<EntityStruct> objs)
-        {
-            if (objs.Count == 0)
-            {
-                return;
+                throw new ArgumentException();
             }
             Func<IDbCommand, ICollection<EntityStruct>, string> cmdBuilder = DeleteCommandBuilder.Create;
             ExecuteNonQuery(
                 new Dictionary<Func<IDbCommand, ICollection<EntityStruct>, string>, ICollection<EntityStruct>>
                 {
                     {
-                        cmdBuilder, objs
+                        cmdBuilder, new List<EntityStruct>{obj}
                     }
                 });
         }
 
-        public void Commit(ICollection<EntityStruct> updObjs, ICollection<EntityStruct> delObjs, ICollection<EntityStruct> addObjs)
+        public void RemoveWhere(BinaryExpression exp, Type type)
         {
-            if (updObjs.Count == 0 && delObjs.Count == 0 && addObjs.Count == 0)
+            throw new NotImplementedException();
+        }
+
+        public void Commit(
+            ICollection<EntityStruct> updObjs,
+            ICollection<EntityStruct> delObjs,
+            ICollection<EntityStruct> addObjs,
+           Dictionary<BinaryExpression, EntityStruct> packUpdObjs,
+            Dictionary<BinaryExpression, Type> deleteExp
+            )
+        {
+            if (updObjs.Count == 0 && delObjs.Count == 0 && addObjs.Count == 0 && packUpdObjs.Count == 0 && deleteExp.Count == 0)
             {
                 return;
             }
@@ -100,11 +134,26 @@ namespace MapperOrm.DBContext
             {
                 cmdBuilder.Add(DeleteCommandBuilder.Create, delObjs);
             }
+            var packUpdDict =
+                new Dictionary<Func<IDbCommand, Dictionary<BinaryExpression, EntityStruct>, string>, Dictionary<BinaryExpression, EntityStruct>>
+                    {
+                        {UpdateBySelectCommandBulder.Create, packUpdObjs}
+                    };
 
-            ExecuteNonQuery(cmdBuilder);
+            var packDeleteDict =
+              new Dictionary<Func<IDbCommand, Dictionary<BinaryExpression, Type>, string>, Dictionary<BinaryExpression, Type>>
+                    {
+                        {DeleteWhereCommandBulder.Create, deleteExp}
+                    };
+
+            ExecuteNonQuery(cmdBuilder, packUpdDict, packDeleteDict);
         }
 
-        private void ExecuteNonQuery(Dictionary<Func<IDbCommand, ICollection<EntityStruct>, string>, ICollection<EntityStruct>> cmdBuilder)
+        private void ExecuteNonQuery(Dictionary<Func<IDbCommand, ICollection<EntityStruct>, string>, ICollection<EntityStruct>> cmdBuilder,
+
+            Dictionary<Func<IDbCommand, Dictionary<BinaryExpression, EntityStruct>, string>, Dictionary<BinaryExpression, EntityStruct>> updObjs = null,
+             Dictionary<Func<IDbCommand, Dictionary<BinaryExpression, Type>, string>, Dictionary<BinaryExpression, Type>> delObjs = null
+            )
         {
             using (var conn = _connection)
             {
@@ -115,6 +164,21 @@ namespace MapperOrm.DBContext
                     {
                         cmdTxtBuilder.Append(builder.Key.Invoke(command, builder.Value));
                     }
+                    if (updObjs != null)
+                    {
+                        foreach (var updObj in updObjs)
+                        {
+                            cmdTxtBuilder.Append(updObj.Key.Invoke(command, updObj.Value));
+                        }
+                    }
+                    if (delObjs != null)
+                    {
+                        foreach (var delObj in delObjs)
+                        {
+                            cmdTxtBuilder.Append(delObj.Key.Invoke(command, delObj.Value));
+                        }
+                    }
+
 
                     command.CommandText = cmdTxtBuilder.ToString();
                     command.CommandType = CommandType.Text;
@@ -129,15 +193,15 @@ namespace MapperOrm.DBContext
 
 
 
-        private ICollection<T> ExecuteListReader<T>(Dictionary<string, object> keyValue) where T : class, IEntity, new()
+        private ICollection<T> ExecuteListReader<T>(EntityStruct objs) where T : EntityBase, IEntity, new()
         {
-            Func<IDbCommand, Dictionary<string, object>, string> cmdBuilder = SelectCommandBulder.Create<T>;
+            Func<IDbCommand, EntityStruct, string> cmdBuilder = SelectCommandBulder.Create;
             ICollection<T> result;
             using (var conn = _connection)
             {
                 using (var command = conn.CreateCommand())
                 {
-                    command.CommandText = cmdBuilder.Invoke(command, keyValue);
+                    command.CommandText = cmdBuilder.Invoke(command, objs);
                     command.CommandType = CommandType.Text;
                     conn.Open();
                     result = command.ExecuteListReader<T>();

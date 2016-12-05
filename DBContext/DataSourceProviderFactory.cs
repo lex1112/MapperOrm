@@ -20,7 +20,7 @@ namespace MapperOrm.DBContext
                 connection = factory.CreateConnection();
                 if (connection != null) connection.ConnectionString = connectionString;
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException)
             {
                 try
                 {

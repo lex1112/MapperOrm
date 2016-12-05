@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using MapperOrm.Attributes;
 using MapperOrm.Helpers;
 using MapperOrm.Models;
@@ -82,7 +84,91 @@ namespace MapperOrm.CommandBuilders
             return tableName;
         }
 
+        private static string BuildClauseByNode(IDbCommand command, Type type, BinaryExpression left, StringBuilder strBuilder)
+        {
+            var tableName = GetTableName(type);
+            if (left != null)
+            {
+                var parameter = command.CreateParameter();
+                var fieldName = string.Empty;
+                var expField = left.Left as MemberExpression;
+                if (expField == null)
+                {
+                    if (left.Left is BinaryExpression)
+                    {
+                        BuildClauseByNode(command, type, left.Left as BinaryExpression, strBuilder);
+                        strBuilder.Append(ExpressionTypeToDbClause.Instance[left.NodeType]);
+                    }
+                }
+                else
+                {
+                    foreach (var prop in ReflectionWrapper.GetPropertiesByFieldNamesAttrs(type))
+                    {
+                        var name = expField.Member.Name;
+                        if (name.Equals(prop.Name))
+                        {
+                            var attrs = ReflectionWrapper.GetFieldNameAttribute(prop);
+                            fieldName = attrs.First().Value;
+                            strBuilder.Append(string.Format("[{0}].[{1}]", tableName, fieldName));
+                            var action = ExpressionTypeToDbClause.Instance[left.NodeType];
+                            strBuilder.Append(action);
+                            parameter.DbType = TypeMap[prop.PropertyType];
+                            break;
+                        }
+                    }
+                }
 
+                var expValue = left.Right as ConstantExpression;
+                if (expValue == null)
+                {
+                    var unaryNode = left.Right as UnaryExpression;
+                    if (unaryNode != null)
+                    {
+                        expValue = unaryNode.Operand as ConstantExpression;
+                        if (expValue != null)
+                        {
+                            InitParams(command, strBuilder, fieldName, parameter, expValue);
+
+                        }
+                    }
+
+                    if (expValue == null)
+                    {
+                        if (left.Right is BinaryExpression)
+                        {
+                            BuildClauseByNode(command, type, left.Right as BinaryExpression, strBuilder);
+                        }
+                    }
+
+                }
+                else
+                {
+                    InitParams(command, strBuilder, fieldName, parameter, expValue);
+                }
+
+            }
+            return strBuilder.ToString();
+        }
+
+        private static void InitParams(IDbCommand command, StringBuilder strBuilder, string fieldName,
+                                       IDataParameter parameter, ConstantExpression expValue)
+        {
+
+            var valueFormat = GetParamsFormat(fieldName, expValue.Value, command.Connection.Database);
+            strBuilder.Append(valueFormat);
+            parameter.ParameterName = valueFormat;
+            parameter.Value = expValue.Value;
+            if (!command.Parameters.Contains(parameter.ParameterName))
+                command.Parameters.Add(parameter);
+        }
+
+        public static string BuildClauseByExpression(IDbCommand command, Type type, BinaryExpression exp)
+        {
+            var strBuilder = new StringBuilder();
+
+            return BuildClauseByNode(command, type, exp, strBuilder);
+
+        }
 
         public static string GetParamsFormat(string fieldName, object value, string dbName)
         {

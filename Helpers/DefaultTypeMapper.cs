@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using MapperOrm.Models;
 
 namespace MapperOrm.Helpers
@@ -23,7 +24,7 @@ namespace MapperOrm.Helpers
             }
             var result = new T();
 
-            var i = 0;
+          
             foreach (var prop in nameProps)
             {
                 try
@@ -31,6 +32,7 @@ namespace MapperOrm.Helpers
                     var attrs = ReflectionWrapper.GetFieldNameAttribute(prop);
 
                     var exit = false;
+                    var i = 0;
                     if (attrs.Count != 0)
                     {
                         while (i <= reader.FieldCount - 1 && !exit)
@@ -40,8 +42,10 @@ namespace MapperOrm.Helpers
                             {
                                 exit = true;
                                 prop.SetValue(result, reader[i].CastDbTypes(prop.PropertyType), null);
-                                i++;
+                              
                             }
+                            i++;
+                           
                         }
                     }
                 }
@@ -64,7 +68,13 @@ namespace MapperOrm.Helpers
                             var id = Convert.ToInt32(resProp.GetValue(result, null));
                             var fieldName = relatedAttr.First().RelatedFieldName;
                             var connString = connection.ConnectionString;
-                            var instance = Activator.CreateInstance(relatedProp.PropertyType, new object[] { id, fieldName, connString });
+                            var type = relatedProp.PropertyType.GetGenericArguments()[0];
+
+                            var param = Activator.CreateInstance(type);
+                            var propertyInfo = type.GetProperty(fieldName);
+                            propertyInfo.SetValue(param, id, null);
+
+                            var instance = Activator.CreateInstance(relatedProp.PropertyType, new object[] { param, connString });
                             relatedProp.SetValue(result, instance, null);
                             break;
                         }

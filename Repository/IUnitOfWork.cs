@@ -8,8 +8,9 @@ namespace MapperOrm.Repository
 {
     internal interface IDetector
     {
-       Dictionary<string,IObjectDetector> ObjectDetector { get; }
+        Dictionary<string, IObjectTracker> ObjectDetector { get; }
     }
+
     public interface IUnitOfWork : IDisposable
     {
         void Commit();

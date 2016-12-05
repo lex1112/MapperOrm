@@ -5,3 +5,9 @@ C:\Users\Euroset\Documents\Visual Studio 2012\Projects\ExampleMapperOrm\MapperOr
 C:\Users\Euroset\Documents\Visual Studio 2012\Projects\ExampleMapperOrm\MapperOrm\obj\Release\MapperOrm.dll
 C:\Users\Euroset\Documents\Visual Studio 2012\Projects\ExampleMapperOrm\MapperOrm\obj\Release\MapperOrm.pdb
 C:\Users\Euroset\Documents\Visual Studio 2012\Projects\ExampleMapperOrm\MapperOrm\obj\Release\MapperOrm.csprojResolveAssemblyReference.cache
+C:\Users\Euroset\Documents\Visual Studio 2012\Projects\MapperOrmSolution\MapperOrm\bin\Release\MapperOrm.dll
+C:\Users\Euroset\Documents\Visual Studio 2012\Projects\MapperOrmSolution\MapperOrm\bin\Release\MapperOrm.pdb
+C:\Users\Euroset\Documents\Visual Studio 2012\Projects\MapperOrmSolution\MapperOrm\bin\Release\Microsoft.Web.Infrastructure.dll
+C:\Users\Euroset\Documents\Visual Studio 2012\Projects\MapperOrmSolution\MapperOrm\bin\Release\Microsoft.Web.Infrastructure.xml
+C:\Users\Euroset\Documents\Visual Studio 2012\Projects\MapperOrmSolution\MapperOrm\obj\Release\MapperOrm.dll
+C:\Users\Euroset\Documents\Visual Studio 2012\Projects\MapperOrmSolution\MapperOrm\obj\Release\MapperOrm.pdb
